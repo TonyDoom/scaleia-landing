@@ -1599,7 +1599,7 @@
       if (!fn || !em) { alert('Por favor completa al menos tu nombre y email.'); return; }
       const data = { nombre: fn + ' ' + document.getElementById('lname').value, email: em, empresa: document.getElementById('company').value, cargo: document.getElementById('role').value, industria: document.getElementById('industry').value, reto: document.getElementById('challenge').value, equipo: document.getElementById('teamSize').value, timestamp: new Date().toISOString(), source: 'landing_scaleia' };
       // INTEGRACIÓN — descomenta tu plataforma:
-      // fetch('https://tu-webhook.n8n.io/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+      // fetch('https://tu-webhook.n8n.io/leads',{metod:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
       fetch('https://hook.us2.make.com/i41iopw71vocwsh8e3c3othlphlz43ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
