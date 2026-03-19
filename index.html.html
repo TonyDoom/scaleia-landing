@@ -1578,7 +1578,7 @@
   <footer>
     <div class="footer-logo">Scale<span>IA</span></div>
     <p>© 2025 ScaleIA · AI-Powered Scalability · Todos los derechos reservados</p>
-    <p style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--muted)">scaleia.com.mx</p>
+    <p style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--muted)">ScaleIA.com</p>
   </footer>
 
   <script>
@@ -1593,22 +1593,57 @@
     document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
 
     // FORM
-    function submitLead(e) {
+    async function submitLead(e) {
       e.preventDefault();
-      const fn = document.getElementById('fname').value, em = document.getElementById('email').value;
-      if (!fn || !em) { alert('Por favor completa al menos tu nombre y email.'); return; }
-      const data = { nombre: fn + ' ' + document.getElementById('lname').value, email: em, empresa: document.getElementById('company').value, cargo: document.getElementById('role').value, industria: document.getElementById('industry').value, reto: document.getElementById('challenge').value, equipo: document.getElementById('teamSize').value, timestamp: new Date().toISOString(), source: 'landing_scaleia' };
-      // INTEGRACIÓN — descomenta tu plataforma:
-      // fetch('https://tu-webhook.n8n.io/leads',{metod:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
-      fetch('https://hook.us2.make.com/i41iopw71vocwsh8e3c3othlphlz43ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)  // nombre, email, empresa, industria...
-      });
+      const btn = e.target;
+      const fn = document.getElementById('fname').value;
+      const ln = document.getElementById('lname').value;
+      const em = document.getElementById('email').value;
 
-      console.log('Lead capturado:', data);
-      const btn = e.target; btn.textContent = '⚡ Procesando con IA...'; btn.disabled = true;
-      setTimeout(() => { document.getElementById('formContent').style.display = 'none'; document.getElementById('formSuccess').style.display = 'block'; }, 1800);
+      if (!fn || !em) {
+        alert('Por favor completa al menos tu nombre y email.');
+        return;
+      }
+
+      const data = {
+        nombre: fn + ' ' + ln,
+        email: em,
+        empresa: document.getElementById('company').value,
+        cargo: document.getElementById('role').value,
+        industria: document.getElementById('industry').value,
+        reto: document.getElementById('challenge').value,
+        equipo: document.getElementById('teamSize').value,
+        timestamp: new Date().toISOString(),
+        source: 'landing_scaleia'
+      };
+
+      console.log('Iniciando captura de lead:', data);
+      btn.textContent = '⚡ Procesando con IA...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('https://hook.us2.make.com/i41iopw71vocwsh8e3c3othlphlz43ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          console.log('Lead enviado con éxito a Make');
+          document.getElementById('formContent').style.display = 'none';
+          document.getElementById('formSuccess').style.display = 'block';
+        } else {
+          console.error('Error en la respuesta del servidor:', response.statusText);
+          alert('Hubo un problema al enviar el formulario. Por favor intenta de nuevo.');
+          btn.textContent = 'Agenda mi diagnóstico gratuito →';
+          btn.disabled = false;
+        }
+      } catch (error) {
+        console.error('Error de red al intentar conectar con Make:', error);
+        alert('No se pudo establecer conexión para enviar los datos. Revisa tu conexión a internet.');
+        btn.textContent = 'Agenda mi diagnóstico gratuito →';
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
