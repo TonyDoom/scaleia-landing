@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScaleIA — Diagnóstico Inteligente</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:  #060c18;
+  --deep:   #0a1628;
+  --navy:   #0d1f3c;
+  --blue:   #1a4a8a;
+  --mid:    #2d7dd2;
+  --cyan:   #00c8ff;
+  --white:  #e8f4ff;
+  --muted:  #7a9bbe;
+  --border: rgba(0,200,255,0.12);
+  --card:   #0d1a2e;
+
+  --c1: #00c8ff; /* Automatización */
+  --c2: #7c3aed; /* Agentes IA */
+  --c3: #059669; /* Análisis Predictivo */
+  --c4: #f59e0b; /* Chatbots */
+  --c5: #dc2626; /* Integración LLMs */
+  --c6: #0891b2; /* Estrategia IA */
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--black);
+  color:var(--white);
+  font-family:'DM Sans',sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  overflow-x:hidden;
+  cursor:none;
+  min-height:100vh;
+}
+
+/* CURSOR */
+#cur{width:10px;height:10px;background:var(--cyan);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;mix-blend-mode:screen;box-shadow:0 0 8px var(--cyan);transition:transform 0.1s;}
+#cur-ring{width:36px;height:36px;border:1px solid rgba(0,200,255,0.4);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transition:all 0.14s ease;}
+body:has(button:hover) #cur{transform:scale(2);}
+
+/* NOISE */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9000;opacity:0.3;}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 3rem;
+  background:rgba(6,12,24,0.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.04em;color:var(--white);text-decoration:none;}
+.logo span{color:var(--cyan);text-shadow:0 0 18px rgba(0,200,255,0.5);}
+.nav-tag{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;}
+
+/* HOME SCREEN */
+#home{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:6rem 2rem 4rem;position:relative;overflow:hidden;
+}
+.home-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0,200,255,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(29,74,138,0.1) 0%, transparent 60%);
+  pointer-events:none;
+}
+.home-tag{
+  font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--cyan);
+  letter-spacing:0.25em;text-transform:uppercase;margin-bottom:1.5rem;
+  display:flex;align-items:center;gap:0.8rem;
+}
+.home-tag::before{content:'';display:inline-block;width:24px;height:1px;background:var(--cyan);}
+#home h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3rem,8vw,6.5rem);
+  line-height:0.9;letter-spacing:0.01em;
+  text-align:center;margin-bottom:1.5rem;
+}
+#home h1 .accent{color:var(--cyan);text-shadow:0 0 30px rgba(0,200,255,0.4);}
+#home h1 .stroke{-webkit-text-stroke:1px rgba(0,200,255,0.4);color:transparent;}
+.home-sub{
+  font-size:1rem;color:var(--muted);max-width:540px;text-align:center;
+  margin-bottom:3.5rem;font-weight:300;line-height:1.8;
+}
+
+/* AREA GRID */
+.areas-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--border);border:1px solid var(--border);
+  max-width:900px;width:100%;margin:0 auto;
+}
+.area-card{
+  background:var(--black);padding:2rem 1.5rem;
+  cursor:none;transition:all 0.25s;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:0.8rem;
+}
+.area-card::before{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:var(--area-color);transform:scaleX(0);transform-origin:left;
+  transition:transform 0.3s;
+}
+.area-card::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 100%, rgba(var(--area-rgb),0.06) 0%, transparent 70%);
+  opacity:0;transition:opacity 0.3s;
+}
+.area-card:hover{background:var(--card);}
+.area-card:hover::before{transform:scaleX(1);}
+.area-card:hover::after{opacity:1;}
+.area-card:hover .area-num{color:var(--area-color);}
+.area-icon{font-size:1.8rem;display:block;}
+.area-num{
+  font-family:'Space Mono',monospace;font-size:0.6rem;
+  color:rgba(255,255,255,0.15);letter-spacing:0.15em;
+  transition:color 0.3s;position:absolute;top:1.2rem;right:1.4rem;
+}
+.area-card h3{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.03em;color:var(--white);}
+.area-card p{font-size:0.8rem;color:var(--muted);line-height:1.5;}
+.area-badge{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  font-family:'Space Mono',monospace;font-size:0.62rem;
+  color:var(--area-color);letter-spacing:0.1em;margin-top:auto;
+  padding-top:0.8rem;border-top:1px solid rgba(255,255,255,0.05);
+}
+.area-badge::after{content:'→';transition:transform 0.2s;}
+.area-card:hover .area-badge::after{transform:translateX(4px);}
+
+/* QUIZ SCREEN */
+#quiz{display:none;min-height:100vh;padding:5rem 2rem 4rem;}
+.quiz-inner{max-width:720px;margin:0 auto;}
+
+.quiz-header{margin-bottom:3rem;}
+.back-btn{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  font-family:'Space Mono',monospace;font-size:0.68rem;
+  color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;
+  background:none;border:none;cursor:none;padding:0;
+  transition:color 0.2s;margin-bottom:2rem;
+}
+.back-btn:hover{color:var(--white);}
+.back-btn span{font-size:1rem;}
+.quiz-area-tag{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  font-family:'Space Mono',monospace;font-size:0.68rem;
+  letter-spacing:0.15em;text-transform:uppercase;
+  padding:0.4rem 0.9rem;border:1px solid;border-radius:2px;
+  margin-bottom:1rem;
+}
+.quiz-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,5vw,3.5rem);line-height:0.95;margin-bottom:0.8rem;}
+.quiz-desc{color:var(--muted);font-size:0.9rem;font-weight:300;}
+
+/* PROGRESS */
+.progress-bar{
+  height:2px;background:rgba(255,255,255,0.06);
+  border-radius:1px;margin-bottom:2.5rem;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:var(--area-color, var(--cyan));
+  border-radius:1px;transition:width 0.5s ease;
+  box-shadow:0 0 8px var(--area-color, var(--cyan));
+}
+.progress-label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Space Mono',monospace;font-size:0.63rem;
+  color:var(--muted);letter-spacing:0.1em;margin-bottom:0.6rem;
+}
+
+/* QUESTION */
+.question-card{
+  background:var(--card);border:1px solid var(--border);
+  padding:2rem;border-radius:2px;margin-bottom:1rem;
+  animation:slideIn 0.35s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.q-number{
+  font-family:'Space Mono',monospace;font-size:0.62rem;
+  color:var(--muted);letter-spacing:0.15em;margin-bottom:0.8rem;
+}
+.q-text{font-size:1rem;font-weight:500;line-height:1.5;margin-bottom:1.5rem;color:var(--white);}
+.q-type-tag{
+  font-family:'Space Mono',monospace;font-size:0.58rem;
+  color:var(--muted);letter-spacing:0.1em;margin-bottom:1rem;display:block;
+}
+
+/* OPTIONS */
+.options{display:flex;flex-direction:column;gap:0.5rem;}
+.option{
+  display:flex;align-items:flex-start;gap:0.9rem;
+  padding:0.85rem 1rem;
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:2px;cursor:none;
+  background:rgba(255,255,255,0.02);
+  transition:all 0.2s;font-size:0.9rem;
+  color:var(--muted);
+}
+.option:hover{border-color:rgba(255,255,255,0.2);color:var(--white);background:rgba(255,255,255,0.04);}
+.option.selected{
+  border-color:var(--area-color);
+  background:rgba(var(--area-rgb),0.08);
+  color:var(--white);
+}
+.option-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.2);
+  flex-shrink:0;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+.option.selected .option-dot{
+  background:var(--area-color);border-color:var(--area-color);
+  box-shadow:0 0 8px var(--area-color);
+}
+.option-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--black);opacity:0;transition:opacity 0.2s;}
+.option.selected .option-dot::after{opacity:1;}
+
+/* MULTI CHECKBOX */
+.option.checkbox .option-dot{border-radius:2px;}
+
+/* SCALE / SLIDER */
+.scale-wrap{padding:0.5rem 0;}
+.scale-labels{
+  display:flex;justify-content:space-between;
+  font-size:0.72rem;color:var(--muted);margin-bottom:0.8rem;
+}
+input[type=range]{
+  width:100%;-webkit-appearance:none;appearance:none;
+  height:3px;background:rgba(255,255,255,0.1);border-radius:2px;outline:none;cursor:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--area-color,var(--cyan));cursor:none;
+  box-shadow:0 0 10px var(--area-color,var(--cyan));
+}
+.scale-value{
+  text-align:center;font-family:'Bebas Neue',sans-serif;font-size:2.5rem;
+  color:var(--area-color,var(--cyan));margin-top:0.5rem;
+  text-shadow:0 0 20px var(--area-color,var(--cyan));
+}
+
+/* TEXT AREA */
+.q-textarea{
+  width:100%;min-height:90px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.1);
+  color:var(--white);padding:0.8rem;
+  font-family:'DM Sans',sans-serif;font-size:0.9rem;
+  border-radius:2px;outline:none;resize:vertical;cursor:text;
+  transition:border-color 0.2s;
+}
+.q-textarea:focus{border-color:var(--area-color,var(--cyan));}
+.q-textarea::placeholder{color:rgba(122,155,190,0.4);}
+
+/* NAV BUTTONS */
+.quiz-nav{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:1.5rem;gap:1rem;
+}
+.btn-prev{
+  border:1px solid rgba(255,255,255,0.1);color:var(--muted);
+  padding:0.75rem 1.6rem;font-size:0.82rem;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:none;border-radius:2px;
+  background:transparent;transition:all 0.2s;
+  font-family:'DM Sans',sans-serif;font-weight:500;
+}
+.btn-prev:hover{border-color:rgba(255,255,255,0.3);color:var(--white);}
+.btn-next{
+  padding:0.75rem 2rem;font-size:0.82rem;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:none;border-radius:2px;
+  border:none;font-family:'DM Sans',sans-serif;font-weight:700;
+  transition:all 0.2s;flex:1;max-width:260px;
+}
+.btn-next:not(:disabled){
+  background:var(--area-color,var(--cyan));color:var(--black);
+  box-shadow:0 0 20px rgba(var(--area-rgb),0.3);
+}
+.btn-next:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 0 28px rgba(var(--area-rgb),0.5);}
+.btn-next:disabled{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.25);cursor:default;}
+
+/* RESULTS SCREEN */
+#results{display:none;min-height:100vh;padding:5rem 2rem 4rem;}
+.results-inner{max-width:760px;margin:0 auto;}
+.results-header{margin-bottom:3rem;}
+.score-hero{
+  display:flex;align-items:center;gap:2.5rem;
+  background:var(--card);border:1px solid var(--border);
+  padding:2rem 2.5rem;margin-bottom:2rem;
+}
+.score-ring{
+  width:100px;height:100px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:2.4rem;
+  border:2px solid;flex-shrink:0;position:relative;
+}
+.score-ring::before{
+  content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(var(--area-rgb),0.2);
+}
+.score-info h2{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;margin-bottom:0.4rem;}
+.score-info p{color:var(--muted);font-size:0.9rem;line-height:1.6;}
+
+.rec-section{margin-bottom:2rem;}
+.rec-title{
+  font-family:'Space Mono',monospace;font-size:0.68rem;
+  color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;
+  margin-bottom:1rem;display:flex;align-items:center;gap:0.8rem;
+}
+.rec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.rec-card{
+  background:var(--card);border:1px solid var(--border);
+  padding:1.4rem 1.6rem;margin-bottom:0.6rem;border-radius:2px;
+  border-left:3px solid var(--area-color,var(--cyan));
+  transition:border-color 0.2s;
+}
+.rec-card-head{display:flex;align-items:center;gap:0.7rem;margin-bottom:0.5rem;}
+.rec-card-icon{font-size:1.1rem;}
+.rec-card-title{font-weight:600;font-size:0.9rem;}
+.rec-card-body{color:var(--muted);font-size:0.85rem;line-height:1.6;}
+.rec-card-tag{
+  display:inline-block;font-family:'Space Mono',monospace;font-size:0.58rem;
+  letter-spacing:0.1em;color:var(--area-color,var(--cyan));
+  border:1px solid;padding:0.2rem 0.5rem;margin-top:0.6rem;border-radius:1px;
+}
+
+.answers-summary{
+  background:var(--card);border:1px solid var(--border);
+  padding:1.5rem;border-radius:2px;
+}
+.answer-row{
+  display:flex;gap:1rem;padding:0.6rem 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.84rem;
+}
+.answer-row:last-child{border-bottom:none;}
+.answer-q{color:var(--muted);flex:1;}
+.answer-a{color:var(--white);font-weight:500;text-align:right;max-width:55%;}
+
+.results-actions{
+  display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap;
+}
+.btn-primary{
+  background:var(--area-color,var(--cyan));color:var(--black);
+  padding:0.85rem 2rem;font-weight:700;font-size:0.85rem;
+  letter-spacing:0.08em;text-transform:uppercase;border:none;
+  cursor:none;border-radius:2px;transition:all 0.2s;
+  box-shadow:0 0 20px rgba(var(--area-rgb),0.3);
+}
+.btn-secondary{
+  border:1px solid rgba(255,255,255,0.15);color:var(--white);
+  padding:0.85rem 2rem;font-size:0.85rem;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:none;border-radius:2px;
+  background:transparent;transition:all 0.2s;
+}
+.btn-secondary:hover{border-color:rgba(255,255,255,0.35);}
+
+/* URGENCY TAGS */
+.tag-alta{color:#ef4444;border-color:#ef4444;}
+.tag-media{color:#f59e0b;border-color:#f59e0b;}
+.tag-baja{color:#22c55e;border-color:#22c55e;}
+
+@media(max-width:700px){
+  nav{padding:1rem 1.5rem;}
+  .areas-grid{grid-template-columns:1fr;}
+  #home,#quiz,#results{padding:5rem 1.2rem 3rem;}
+  .score-hero{flex-direction:column;text-align:center;}
+  .quiz-nav{flex-direction:column;}
+  .btn-next{max-width:100%;}
+}
+
+/* ── MODAL CAPTURA DE DATOS ──────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(6,12,24,0.88);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  padding:1.5rem;opacity:0;pointer-events:none;
+  transition:opacity 0.3s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{
+  background:#0d1a2e;border:1px solid rgba(0,200,255,0.15);
+  max-width:480px;width:100%;padding:2.5rem;
+  position:relative;border-radius:2px;
+  transform:translateY(20px);transition:transform 0.35s;
+  border-top:3px solid var(--area-color,#00c8ff);
+}
+.modal-overlay.open .modal-box{transform:translateY(0);}
+.modal-close{
+  position:absolute;top:1rem;right:1rem;
+  background:none;border:none;color:var(--muted);
+  font-size:1.2rem;cursor:pointer;padding:0.3rem;
+  transition:color 0.2s;
+}
+.modal-close:hover{color:var(--white);}
+.modal-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.8rem;
+  color:var(--white);margin-bottom:0.3rem;letter-spacing:0.03em;
+}
+.modal-sub{font-size:0.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.5;}
+.modal-score-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.35rem 0.8rem;margin-bottom:1.2rem;
+  border:1px solid var(--area-color,#00c8ff);
+  font-family:'Space Mono',monospace;font-size:0.65rem;
+  color:var(--area-color,#00c8ff);letter-spacing:0.12em;
+  background:rgba(0,200,255,0.05);
+}
+.mfg{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:1rem;}
+.mfg label{
+  font-family:'Space Mono',monospace;font-size:0.62rem;
+  color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;
+}
+.mfg input,.mfg select{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  color:var(--white);padding:0.7rem 0.9rem;
+  font-family:'DM Sans',sans-serif;font-size:0.9rem;
+  outline:none;transition:border-color 0.2s;border-radius:2px;
+}
+.mfg input:focus,.mfg select:focus{border-color:var(--area-color,#00c8ff);}
+.mfg input::placeholder{color:rgba(122,155,190,0.35);}
+.mfg select{cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a9bbe' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 0.9rem center;}
+.mfg select option{background:#0a1628;}
+.mfrow{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
+.btn-modal-send{
+  width:100%;padding:0.85rem;margin-top:0.5rem;
+  font-size:0.85rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;border:none;cursor:pointer;
+  border-radius:2px;transition:all 0.25s;
+  background:var(--area-color,#00c8ff);color:#060c18;
+}
+.btn-modal-send:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-modal-send:disabled{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);cursor:default;transform:none;}
+.modal-success{
+  text-align:center;padding:1rem 0;
+}
+.modal-success .ms-icon{font-size:3rem;display:block;margin-bottom:0.8rem;}
+.modal-success h3{
+  font-family:'Bebas Neue',sans-serif;font-size:2rem;
+  color:var(--white);margin-bottom:0.5rem;
+}
+.modal-success p{font-size:0.85rem;color:var(--muted);line-height:1.6;}
+.modal-privacy{
+  font-size:0.7rem;color:rgba(122,155,190,0.5);
+  text-align:center;margin-top:0.8rem;line-height:1.5;
+}
+
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<nav>
+  <a href="#" class="logo" onclick="goHome()">Scale<span>IA</span></a>
+  <span class="nav-tag">Diagnóstico Inteligente</span>
+</nav>
+
+<!-- ══════════════ HOME ══════════════ -->
+<section id="home">
+  <div class="home-bg"></div>
+  <div class="home-tag">Sistema de Diagnóstico v1.0</div>
+  <h1>DETECTA EL<br><span class="accent">POTENCIAL</span><br><span class="stroke">IA</span> DE TU EMPRESA</h1>
+  <p class="home-sub">Selecciona el área que más se acerca a tu necesidad. Responde el cuestionario y obtén un diagnóstico personalizado con recomendaciones concretas para tu negocio.</p>
+  <div class="areas-grid" id="areas-grid"></div>
+</section>
+
+<!-- ══════════════ QUIZ ══════════════ -->
+<section id="quiz">
+  <div class="quiz-inner">
+    <div class="quiz-header">
+      <button class="back-btn" onclick="goHome()"><span>←</span> Volver a áreas</button>
+      <div class="quiz-area-tag" id="q-area-tag"></div>
+      <h2 class="quiz-title" id="q-title"></h2>
+      <p class="quiz-desc" id="q-desc"></p>
+    </div>
+    <div class="progress-label">
+      <span id="q-progress-label">Pregunta 1 de 10</span>
+      <span id="q-progress-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div id="question-container"></div>
+    <div class="quiz-nav">
+      <button class="btn-prev" id="btn-prev" onclick="prevQ()">← Anterior</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()">Siguiente →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ RESULTS ══════════════ -->
+<section id="results">
+  <div class="results-inner">
+    <div class="results-header">
+      <button class="back-btn" onclick="goHome()"><span>←</span> Nuevo diagnóstico</button>
+      <div class="quiz-area-tag" id="r-area-tag"></div>
+      <h2 class="quiz-title" id="r-title">DIAGNÓSTICO COMPLETO</h2>
+    </div>
+    <div id="results-content"></div>
+  </div>
+</section>
+
+<script>
+// ─── CURSOR ───────────────────────────────────
+const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.transform=`translate(${mx-5}px,${my-5}px)`;});
+(function loop(){rx+=(mx-rx)*0.13;ry+=(my-ry)*0.13;ring.style.transform=`translate(${rx-18}px,${ry-18}px)`;requestAnimationFrame(loop);})();
+
+// ─── AREAS DATA ────────────────────────────────
+const AREAS = [
+  {
+    id:'automatizacion',
+    icon:'⚡',
+    title:'Automatización Inteligente',
+    short:'Automatización',
+    desc:'Elimina tareas repetitivas y flujos manuales con IA',
+    color:'#00c8ff',
+    rgb:'0,200,255',
+    questions:[
+      {
+        id:'a1',
+        text:'¿Cuántas horas semanales dedica tu equipo a tareas repetitivas como copiar datos, enviar emails estándar o generar reportes?',
+        type:'radio',
+        options:['Menos de 5 horas','Entre 5 y 15 horas','Entre 15 y 30 horas','Más de 30 horas']
+      },
+      {
+        id:'a2',
+        text:'¿Cuáles de estos procesos realizan manualmente hoy? (selecciona todos los que apliquen)',
+        type:'checkbox',
+        options:['Gestión y respuesta de emails','Generación de reportes y dashboards','Transferencia de datos entre sistemas','Programación de reuniones y seguimientos','Facturación y procesos administrativos','Aprobaciones y flujos de trabajo internos']
+      },
+      {
+        id:'a3',
+        text:'¿Qué herramientas usa actualmente tu empresa para gestionar procesos?',
+        type:'radio',
+        options:['Solo Excel / Google Sheets','CRM básico (HubSpot, Zoho, etc.)','ERP o sistema integrado (SAP, Odoo, etc.)','Mezcla de herramientas desconectadas','No tenemos herramientas formales']
+      },
+      {
+        id:'a4',
+        text:'¿Cuántos errores humanos aproximados ocurren por semana en estos procesos manuales?',
+        type:'scale',
+        min:0,max:20,step:1,default:3,
+        label_min:'0 errores',label_max:'20+ errores'
+      },
+      {
+        id:'a5',
+        text:'¿Cuál es el mayor obstáculo que ha impedido automatizar antes?',
+        type:'radio',
+        options:['No sabíamos cómo hacerlo','Creímos que era muy caro','Falta de tiempo para implementar','Miedo a que el equipo no lo adopte','Intentamos algo y no funcionó']
+      },
+      {
+        id:'a6',
+        text:'¿Qué tan crítico sería para el negocio si estos procesos fállaran 24 horas?',
+        type:'radio',
+        options:['Impacto mínimo','Algunos inconvenientes','Pérdidas moderadas','Pérdidas significativas','Sería catastrófico']
+      },
+      {
+        id:'a7',
+        text:'¿Tu equipo tiene conocimientos técnicos básicos (Excel avanzado, uso de APIs, etc.)?',
+        type:'radio',
+        options:['Ninguno — somos 100% no técnicos','Básicos — algunos saben Excel avanzado','Intermedios — alguien maneja APIs o código','Avanzados — tenemos desarrolladores internos']
+      },
+      {
+        id:'a8',
+        text:'¿Cuánto estarías dispuesto a invertir mensualmente en automatización si el ROI es claro?',
+        type:'radio',
+        options:['Menos de $500 USD','$500 - $2,000 USD','$2,000 - $5,000 USD','Más de $5,000 USD','Depende completamente del ROI']
+      },
+      {
+        id:'a9',
+        text:'¿En qué plazo necesitas ver resultados tangibles?',
+        type:'radio',
+        options:['Inmediato — en 2 semanas','Corto plazo — 1 mes','Mediano plazo — 3 meses','Largo plazo — 6+ meses']
+      },
+      {
+        id:'a10',
+        text:'Describe brevemente el proceso que más te gustaría automatizar primero:',
+        type:'textarea',
+        placeholder:'Ej: Cada semana genero manualmente un reporte de ventas juntando datos de 3 sistemas diferentes...'
+      }
+    ]
+  },
+  {
+    id:'agentes',
+    icon:'🤖',
+    title:'Agentes IA a Medida',
+    short:'Agentes IA',
+    desc:'Agentes autónomos entrenados con el conocimiento de tu empresa',
+    color:'#7c3aed',
+    rgb:'124,58,237',
+    questions:[
+      {
+        id:'ag1',
+        text:'¿Qué tipo de decisiones o tareas necesitarías que un agente ejecutara de forma autónoma?',
+        type:'checkbox',
+        options:['Calificar y responder leads automáticamente','Atender consultas de clientes 24/7','Analizar documentos y extraer información','Ejecutar tareas de ventas y seguimiento','Gestionar inventario o proveedores','Monitorear y reportar métricas clave']
+      },
+      {
+        id:'ag2',
+        text:'¿Qué tan compleja es la toma de decisiones en el área donde quieres el agente?',
+        type:'scale',
+        min:1,max:10,step:1,default:5,
+        label_min:'Muy simple (sí/no)',label_max:'Muy compleja (múltiples variables)'
+      },
+      {
+        id:'ag3',
+        text:'¿Tu empresa tiene documentación interna formalizada? (manuales, guías, políticas, FAQs)',
+        type:'radio',
+        options:['No tenemos nada documentado','Algo informal en emails y chats','Documentos básicos en Google Drive / Notion','Documentación estructurada y actualizada','Sistema de gestión del conocimiento completo']
+      },
+      {
+        id:'ag4',
+        text:'¿Qué volumen de interacciones o tareas necesitaría manejar el agente diariamente?',
+        type:'radio',
+        options:['Menos de 20 interacciones/día','20 - 100 interacciones/día','100 - 500 interacciones/día','Más de 500 interacciones/día']
+      },
+      {
+        id:'ag5',
+        text:'¿En qué canales operaría principalmente el agente?',
+        type:'checkbox',
+        options:['Web (chat en tu sitio)','WhatsApp','Email','Slack / Teams interno','CRM existente','API para integrarse con otros sistemas']
+      },
+      {
+        id:'ag6',
+        text:'¿Qué nivel de autonomía le darías al agente sin revisión humana?',
+        type:'radio',
+        options:['Solo información — no toma acciones','Acciones de bajo riesgo (agendar, enviar info)','Acciones de riesgo medio (calificar, escalar)','Alta autonomía con supervisión mínima']
+      },
+      {
+        id:'ag7',
+        text:'¿Tienes o puedes conseguir datos históricos para entrenar el agente?',
+        type:'radio',
+        options:['No tenemos datos relevantes','Tenemos algunos datos sin estructurar','Tenemos datos estructurados pero limitados','Tenemos abundantes datos históricos bien organizados']
+      },
+      {
+        id:'ag8',
+        text:'¿Hay regulaciones o restricciones legales que limitarían lo que el agente puede hacer?',
+        type:'radio',
+        options:['Sin restricciones relevantes','Algunas restricciones menores','Regulaciones importantes (finanzas, salud, legal)','Sector altamente regulado']
+      },
+      {
+        id:'ag9',
+        text:'¿Cuánto costaría actualmente resolver estas tareas con personas?',
+        type:'radio',
+        options:['Menos de $1,000 USD/mes','$1,000 - $5,000 USD/mes','$5,000 - $20,000 USD/mes','Más de $20,000 USD/mes']
+      },
+      {
+        id:'ag10',
+        text:'¿Cuál sería el principal criterio de éxito para este agente en los primeros 3 meses?',
+        type:'textarea',
+        placeholder:'Ej: Que pueda responder el 80% de las consultas de soporte sin escalar a un humano...'
+      }
+    ]
+  },
+  {
+    id:'predictivo',
+    icon:'📊',
+    title:'Análisis Predictivo',
+    short:'Predicción',
+    desc:'Modelos que anticipan tendencias, riesgos y oportunidades',
+    color:'#059669',
+    rgb:'5,150,105',
+    questions:[
+      {
+        id:'p1',
+        text:'¿Qué quieres predecir o anticipar con IA?',
+        type:'checkbox',
+        options:['Demanda futura de productos/servicios','Riesgo de abandono de clientes (churn)','Probabilidad de conversión de leads','Precios óptimos de venta','Mantenimiento preventivo de equipos','Riesgo financiero o de crédito']
+      },
+      {
+        id:'p2',
+        text:'¿Cuántos datos históricos tienes disponibles para entrenar modelos?',
+        type:'radio',
+        options:['Menos de 6 meses de datos','6 meses a 2 años','2 a 5 años de datos','Más de 5 años de datos detallados']
+      },
+      {
+        id:'p3',
+        text:'¿En qué formato están tus datos actualmente?',
+        type:'checkbox',
+        options:['Excel / CSV (archivos planos)','Base de datos SQL','Google Sheets','CRM / ERP (HubSpot, SAP, etc.)','Data warehouse (BigQuery, Snowflake, etc.)','Datos no estructurados (emails, documentos)']
+      },
+      {
+        id:'p4',
+        text:'¿Con qué frecuencia necesitarías predicciones actualizadas?',
+        type:'radio',
+        options:['Una vez al mes','Semanalmente','Diariamente','En tiempo real (cada hora o menos)']
+      },
+      {
+        id:'p5',
+        text:'¿Tienes un equipo de datos o analistas actualmente?',
+        type:'radio',
+        options:['No, nadie dedicado a datos','Tenemos analistas con Excel/BI básico','Tenemos analistas de datos dedicados','Tenemos data scientists o ingenieros de datos']
+      },
+      {
+        id:'p6',
+        text:'¿Cuánto impacto económico estimado tiene una mala decisión en el área que quieres predecir?',
+        type:'scale',
+        min:1,max:10,step:1,default:5,
+        label_min:'Impacto mínimo',label_max:'Impacto crítico'
+      },
+      {
+        id:'p7',
+        text:'¿Qué herramientas de visualización usa tu empresa hoy?',
+        type:'radio',
+        options:['Nada formal (Excel/tablas)','Google Looker Studio / Data Studio','Power BI','Tableau','No usamos dashboards']
+      },
+      {
+        id:'p8',
+        text:'¿Existe actualmente algún proceso de forecasting o proyección manual?',
+        type:'radio',
+        options:['No, decidimos de forma intuitiva','Sí, pero es muy básico e impreciso','Tenemos proyecciones pero tardamos mucho','Sí, funciona bien pero queremos mejorarlo']
+      },
+      {
+        id:'p9',
+        text:'¿Qué tan tolerante es tu empresa a los falsos positivos en las predicciones?',
+        type:'radio',
+        options:['Alta tolerancia — prefiero más alertas aunque sean falsas','Tolerancia media — balance entre precisión y cobertura','Baja tolerancia — prefiero pocas alertas pero muy precisas']
+      },
+      {
+        id:'p10',
+        text:'¿Qué decisión concreta tomarías si tuvieras una predicción confiable mañana?',
+        type:'textarea',
+        placeholder:'Ej: Si supiera qué clientes están a punto de cancelar, llamaría proactivamente a los top 20 esta semana...'
+      }
+    ]
+  },
+  {
+    id:'chatbots',
+    icon:'💬',
+    title:'Chatbots & Asistentes',
+    short:'Chatbots',
+    desc:'Conversaciones inteligentes que resuelven sin intervención humana',
+    color:'#f59e0b',
+    rgb:'245,158,11',
+    questions:[
+      {
+        id:'ch1',
+        text:'¿Para qué necesitas principalmente el chatbot?',
+        type:'checkbox',
+        options:['Atención al cliente y soporte','Calificación y captura de leads','Asistente interno para tu equipo','Ventas y recomendaciones de productos','FAQ y preguntas frecuentes','Reservas, citas o agendamiento']
+      },
+      {
+        id:'ch2',
+        text:'¿Cuántas consultas de clientes o usuarios recibes actualmente por mes?',
+        type:'radio',
+        options:['Menos de 100','100 - 500','500 - 2,000','2,000 - 10,000','Más de 10,000']
+      },
+      {
+        id:'ch3',
+        text:'¿Qué porcentaje de esas consultas son preguntas repetitivas que podrían automatizarse?',
+        type:'scale',
+        min:10,max:100,step:10,default:50,
+        label_min:'10% repetitivas',label_max:'100% repetitivas'
+      },
+      {
+        id:'ch4',
+        text:'¿En qué canal quieres implementar el chatbot primero?',
+        type:'radio',
+        options:['Sitio web (chat widget)','WhatsApp Business','Instagram / Facebook Messenger','Telegram','App móvil propia','Slack / Teams (uso interno)']
+      },
+      {
+        id:'ch5',
+        text:'¿Qué idiomas necesita manejar el chatbot?',
+        type:'checkbox',
+        options:['Español únicamente','Inglés únicamente','Español e Inglés','Portugués','Otro idioma regional']
+      },
+      {
+        id:'ch6',
+        text:'¿Qué tan complejo es el conocimiento que necesita tener el chatbot?',
+        type:'radio',
+        options:['Simple — respuestas predefinidas a FAQs','Moderado — entiende contexto y varía respuestas','Complejo — analiza situaciones y da consejos','Muy complejo — accede a sistemas y ejecuta acciones']
+      },
+      {
+        id:'ch7',
+        text:'¿Necesitas que el chatbot se integre con sistemas existentes?',
+        type:'checkbox',
+        options:['CRM (HubSpot, Salesforce, etc.)','ERP o sistema de inventario','Sistema de pagos','Calendario / agenda','Base de datos de clientes','No necesita integraciones por ahora']
+      },
+      {
+        id:'ch8',
+        text:'¿Cuánto tiempo tarda actualmente en responder a una consulta un agente humano?',
+        type:'radio',
+        options:['Menos de 1 hora','1 a 4 horas','4 a 24 horas','Más de 24 horas','Depende del horario laboral']
+      },
+      {
+        id:'ch9',
+        text:'¿Qué métrica sería el principal indicador de éxito para el chatbot?',
+        type:'radio',
+        options:['% de consultas resueltas sin humano','Tiempo de primera respuesta','Satisfacción del cliente (CSAT)','Leads generados / calificados','Reducción de costo de atención']
+      },
+      {
+        id:'ch10',
+        text:'¿Hay algún tipo de consulta sensible que el chatbot NO debería manejar nunca?',
+        type:'textarea',
+        placeholder:'Ej: Reclamaciones con carga emocional alta, consultas médicas específicas, datos financieros confidenciales...'
+      }
+    ]
+  },
+  {
+    id:'llms',
+    icon:'🔗',
+    title:'Integración de LLMs',
+    short:'LLMs',
+    desc:'Modelos de lenguaje integrados en tus aplicaciones y flujos',
+    color:'#dc2626',
+    rgb:'220,38,38',
+    questions:[
+      {
+        id:'l1',
+        text:'¿Qué quieres hacer con modelos de lenguaje en tu empresa?',
+        type:'checkbox',
+        options:['Generar contenido (textos, emails, reportes)','Analizar y resumir documentos automáticamente','Extraer información estructurada de textos','Traducción y adaptación de contenido','Asistente de escritura para tu equipo','Procesamiento de contratos o documentos legales']
+      },
+      {
+        id:'l2',
+        text:'¿Tienes una aplicación o sistema existente donde quieres integrar el LLM?',
+        type:'radio',
+        options:['No, sería una herramienta nueva desde cero','Sí, una app web existente','Sí, una app móvil','Sí, un sistema interno (ERP, CRM, etc.)','Sí, múltiples sistemas simultáneamente']
+      },
+      {
+        id:'l3',
+        text:'¿Tu equipo técnico puede consumir APIs REST?',
+        type:'radio',
+        options:['No tenemos equipo técnico','Podemos con ayuda externa','Sí, tenemos desarrolladores básicos','Sí, tenemos equipo técnico sólido','Somos una empresa de tecnología']
+      },
+      {
+        id:'l4',
+        text:'¿Qué volumen de documentos o textos procesarías mensualmente?',
+        type:'radio',
+        options:['Menos de 100 documentos','100 - 1,000 documentos','1,000 - 10,000 documentos','Más de 10,000 documentos']
+      },
+      {
+        id:'l5',
+        text:'¿Cuál es la sensibilidad de los datos que procesaría el LLM?',
+        type:'radio',
+        options:['Datos públicos sin restricciones','Datos internos no críticos','Datos sensibles de clientes','Datos altamente confidenciales (financieros, médicos, legales)']
+      },
+      {
+        id:'l6',
+        text:'¿Requieres que el modelo opere en infraestructura propia (on-premise) por seguridad?',
+        type:'radio',
+        options:['No, cloud está bien','Prefiero cloud pero con garantías de privacidad','Sí, necesito on-premise obligatoriamente','No lo sé todavía']
+      },
+      {
+        id:'l7',
+        text:'¿Cuánta consistencia y precisión necesitas en los outputs del LLM?',
+        type:'scale',
+        min:1,max:10,step:1,default:7,
+        label_min:'Alta variabilidad OK',label_max:'Precisión crítica'
+      },
+      {
+        id:'l8',
+        text:'¿Has experimentado con algún LLM antes? (ChatGPT, Claude, Gemini, etc.)',
+        type:'radio',
+        options:['Nunca lo he usado','Lo uso personalmente pero no en la empresa','Lo hemos probado superficialmente','Tenemos alguna integración básica ya','Tenemos integraciones en producción']
+      },
+      {
+        id:'l9',
+        text:'¿Cuál es el principal resultado de negocio que buscas con la integración?',
+        type:'radio',
+        options:['Ahorrar tiempo de mi equipo','Mejorar la calidad del output','Escalar sin contratar personas','Ofrecer nuevas capacidades a clientes','Reducir costos operativos']
+      },
+      {
+        id:'l10',
+        text:'¿Cuál es el caso de uso específico más urgente que quieres resolver?',
+        type:'textarea',
+        placeholder:'Ej: Tenemos 500 contratos de clientes en PDF y necesitamos extraer automáticamente las fechas de vencimiento y cláusulas clave...'
+      }
+    ]
+  },
+  {
+    id:'estrategia',
+    icon:'🎯',
+    title:'Estrategia de IA',
+    short:'Estrategia',
+    desc:'Roadmap, prioridades y ROI para tu adopción de IA',
+    color:'#0891b2',
+    rgb:'8,145,178',
+    questions:[
+      {
+        id:'e1',
+        text:'¿En qué etapa de adopción de IA se encuentra tu empresa actualmente?',
+        type:'radio',
+        options:['No hemos hecho nada con IA todavía','Explorando — usamos herramientas de IA de forma casual','Piloto — tenemos 1-2 experimentos en curso','Adoptando — algunas áreas ya usan IA formalmente','Avanzada — IA integrada en múltiples procesos clave']
+      },
+      {
+        id:'e2',
+        text:'¿Cuáles son los principales objetivos estratégicos de tu empresa para los próximos 12 meses?',
+        type:'checkbox',
+        options:['Crecer ingresos en un segmento nuevo','Reducir costos operativos significativamente','Mejorar la experiencia del cliente','Lanzar un nuevo producto o servicio','Expandirse a nuevos mercados','Mejorar la eficiencia del equipo actual']
+      },
+      {
+        id:'e3',
+        text:'¿Cuántas personas tiene tu empresa actualmente?',
+        type:'radio',
+        options:['1 - 10 personas','11 - 50 personas','51 - 200 personas','201 - 1,000 personas','Más de 1,000 personas']
+      },
+      {
+        id:'e4',
+        text:'¿Cuál es tu industria principal?',
+        type:'radio',
+        options:['Tecnología / SaaS','E-commerce / Retail','Servicios Financieros','Salud y Bienestar','Manufactura e Industria','Educación','Consultoría y Servicios profesionales','Otro']
+      },
+      {
+        id:'e5',
+        text:'¿Cuánto invierte actualmente la empresa en tecnología y software mensualmente?',
+        type:'radio',
+        options:['Menos de $1,000 USD','$1,000 - $5,000 USD','$5,000 - $20,000 USD','Más de $20,000 USD']
+      },
+      {
+        id:'e6',
+        text:'¿Existe resistencia interna al cambio o adopción de nuevas tecnologías?',
+        type:'scale',
+        min:1,max:10,step:1,default:5,
+        label_min:'Sin resistencia',label_max:'Resistencia muy alta'
+      },
+      {
+        id:'e7',
+        text:'¿Tienes un presupuesto definido o aprobado para iniciativas de IA?',
+        type:'radio',
+        options:['No hay presupuesto definido todavía','Tenemos un presupuesto pequeño ($1K-$5K)','Presupuesto moderado ($5K-$30K)','Presupuesto significativo ($30K+)','Depende del plan de negocio que presentemos']
+      },
+      {
+        id:'e8',
+        text:'¿Quién tomaría la decisión final de implementar IA en tu empresa?',
+        type:'radio',
+        options:['Yo mismo (CEO/Fundador)','Dirección / C-Suite','Gerencia de área','Comité o junta directiva','Necesito convencer a alguien más primero']
+      },
+      {
+        id:'e9',
+        text:'¿Cuál es tu mayor miedo o preocupación respecto a adoptar IA?',
+        type:'checkbox',
+        options:['Que sea muy caro sin ROI claro','Que mi equipo no lo adopte','Problemas de seguridad y privacidad de datos','Que no funcione para mi industria específica','Perder el control sobre procesos críticos','Que quede obsoleto rápidamente']
+      },
+      {
+        id:'e10',
+        text:'¿Qué resultado concreto necesitarías ver en 90 días para considerar que vale la pena?',
+        type:'textarea',
+        placeholder:'Ej: Que hayamos reducido al menos 20 horas semanales de trabajo manual y tengamos el primer proceso automatizado funcionando...'
+      }
+    ]
+  }
+];
+
+// ─── STATE ────────────────────────────────────
+let currentArea = null;
+let currentQ = 0;
+let answers = {};
+
+// ─── INIT HOME ────────────────────────────────
+function initHome(){
+  const grid = document.getElementById('areas-grid');
+  grid.innerHTML = AREAS.map((a,i) => `
+    <div class="area-card" onclick="startQuiz('${a.id}')"
+      style="--area-color:${a.color};--area-rgb:${a.rgb}">
+      <span class="area-num">0${i+1}</span>
+      <span class="area-icon">${a.icon}</span>
+      <h3>${a.title}</h3>
+      <p>${a.desc}</p>
+      <span class="area-badge">Iniciar diagnóstico</span>
+    </div>
+  `).join('');
+}
+
+function goHome(){
+  document.getElementById('home').style.display='flex';
+  document.getElementById('quiz').style.display='none';
+  document.getElementById('results').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ─── START QUIZ ───────────────────────────────
+function startQuiz(areaId){
+  currentArea = AREAS.find(a => a.id === areaId);
+  currentQ = 0;
+  answers = {};
+
+  // Set CSS vars for area color
+  document.documentElement.style.setProperty('--area-color', currentArea.color);
+  document.documentElement.style.setProperty('--area-rgb', currentArea.rgb);
+
+  // Header
+  const tag = document.getElementById('q-area-tag');
+  tag.textContent = `${currentArea.icon}  ${currentArea.short}`;
+  tag.style.color = currentArea.color;
+  tag.style.borderColor = currentArea.color;
+  document.getElementById('q-title').textContent = currentArea.title;
+  document.getElementById('q-desc').textContent = currentArea.desc;
+
+  document.getElementById('home').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  document.getElementById('results').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  renderQuestion();
+}
+
+// ─── RENDER QUESTION ──────────────────────────
+function renderQuestion(){
+  const q = currentArea.questions[currentQ];
+  const total = currentArea.questions.length;
+  const pct = Math.round((currentQ / total) * 100);
+
+  document.getElementById('q-progress-label').textContent = `Pregunta ${currentQ+1} de ${total}`;
+  document.getElementById('q-progress-pct').textContent = `${pct}%`;
+  document.getElementById('progress-fill').style.width = `${pct}%`;
+
+  // Prev/next state
+  document.getElementById('btn-prev').style.visibility = currentQ === 0 ? 'hidden' : 'visible';
+
+  const nextBtn = document.getElementById('btn-next');
+  const isLast = currentQ === total - 1;
+  nextBtn.textContent = isLast ? 'Ver diagnóstico →' : 'Siguiente →';
+
+  // Render question
+  const container = document.getElementById('question-container');
+  container.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'question-card';
+
+  let inputHTML = '';
+
+  if(q.type === 'radio'){
+    inputHTML = `
+      <span class="q-type-tag">// SELECCIÓN ÚNICA</span>
+      <div class="options">
+        ${q.options.map((opt,i) => `
+          <div class="option ${answers[q.id] === opt ? 'selected':''}"
+               onclick="selectRadio('${q.id}', this, '${opt.replace(/'/g,"\\'")}')">
+            <div class="option-dot"></div>
+            <span>${opt}</span>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+  else if(q.type === 'checkbox'){
+    const savedArr = answers[q.id] || [];
+    inputHTML = `
+      <span class="q-type-tag">// SELECCIÓN MÚLTIPLE</span>
+      <div class="options">
+        ${q.options.map((opt,i) => `
+          <div class="option checkbox ${savedArr.includes(opt)?'selected':''}"
+               onclick="toggleCheckbox('${q.id}', this, '${opt.replace(/'/g,"\\'")}')">
+            <div class="option-dot"></div>
+            <span>${opt}</span>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+  else if(q.type === 'scale'){
+    const val = answers[q.id] !== undefined ? answers[q.id] : q.default;
+    inputHTML = `
+      <span class="q-type-tag">// ESCALA DE VALORACIÓN</span>
+      <div class="scale-wrap">
+        <div class="scale-labels"><span>${q.label_min}</span><span>${q.label_max}</span></div>
+        <input type="range" min="${q.min}" max="${q.max}" step="${q.step}" value="${val}"
+          oninput="updateScale('${q.id}', this.value)"
+          style="--area-color:${currentArea.color}">
+        <div class="scale-value" id="scale-val-${q.id}">${val}</div>
+      </div>`;
+    // Auto-save default
+    if(answers[q.id] === undefined) answers[q.id] = q.default;
+  }
+  else if(q.type === 'textarea'){
+    const val = answers[q.id] || '';
+    inputHTML = `
+      <span class="q-type-tag">// RESPUESTA ABIERTA</span>
+      <textarea class="q-textarea" placeholder="${q.placeholder}"
+        oninput="updateText('${q.id}', this.value)">${val}</textarea>`;
+    if(answers[q.id] === undefined) answers[q.id] = '';
+  }
+
+  card.innerHTML = `
+    <div class="q-number">// PREGUNTA ${String(currentQ+1).padStart(2,'0')}</div>
+    <div class="q-text">${q.text}</div>
+    ${inputHTML}
+  `;
+  container.appendChild(card);
+  updateNextBtn();
+}
+
+function selectRadio(qid, el, val){
+  document.querySelectorAll('.option:not(.checkbox)').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[qid] = val;
+  updateNextBtn();
+}
+
+function toggleCheckbox(qid, el, val){
+  if(!answers[qid]) answers[qid] = [];
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    answers[qid] = answers[qid].filter(v => v !== val);
+  } else {
+    el.classList.add('selected');
+    answers[qid].push(val);
+  }
+  updateNextBtn();
+}
+
+function updateScale(qid, val){
+  answers[qid] = parseInt(val);
+  const el = document.getElementById(`scale-val-${qid}`);
+  if(el) el.textContent = val;
+  updateNextBtn();
+}
+
+function updateText(qid, val){
+  answers[qid] = val;
+  updateNextBtn();
+}
+
+function updateNextBtn(){
+  const q = currentArea.questions[currentQ];
+  const btn = document.getElementById('btn-next');
+  let hasAnswer = false;
+  if(q.type === 'radio') hasAnswer = !!answers[q.id];
+  else if(q.type === 'checkbox') hasAnswer = answers[q.id] && answers[q.id].length > 0;
+  else if(q.type === 'scale') hasAnswer = answers[q.id] !== undefined;
+  else if(q.type === 'textarea') hasAnswer = true; // optional
+  btn.disabled = !hasAnswer;
+}
+
+function nextQ(){
+  if(currentQ < currentArea.questions.length - 1){
+    currentQ++;
+    renderQuestion();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    showResults();
+  }
+}
+
+function prevQ(){
+  if(currentQ > 0){
+    currentQ--;
+    renderQuestion();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+// ─── RESULTS ENGINE ───────────────────────────
+function showResults(){
+  document.getElementById('quiz').style.display='none';
+  document.getElementById('results').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  const tag = document.getElementById('r-area-tag');
+  tag.textContent = `${currentArea.icon}  ${currentArea.short} — Diagnóstico Completo`;
+  tag.style.color = currentArea.color;
+  tag.style.borderColor = currentArea.color;
+
+  const score = calcScore();
+  const recs = getRecommendations(score);
+
+  const content = document.getElementById('results-content');
+  content.innerHTML = `
+    <div class="score-hero" style="border-left:3px solid ${currentArea.color}">
+      <div class="score-ring" style="color:${currentArea.color};border-color:${currentArea.color};text-shadow:0 0 20px ${currentArea.color}">
+        ${score.total}%
+      </div>
+      <div class="score-info">
+        <h2 style="color:${currentArea.color}">${score.label}</h2>
+        <p>${score.description}</p>
+      </div>
+    </div>
+
+    <div class="rec-section">
+      <div class="rec-title">Recomendaciones prioritarias</div>
+      ${recs.map(r => `
+        <div class="rec-card" style="border-left-color:${currentArea.color}">
+          <div class="rec-card-head">
+            <span class="rec-card-icon">${r.icon}</span>
+            <span class="rec-card-title">${r.title}</span>
+          </div>
+          <div class="rec-card-body">${r.body}</div>
+          <span class="rec-card-tag tag-${r.urgency.toLowerCase()}">${r.urgency === 'Alta' ? '🔴' : r.urgency === 'Media' ? '🟡' : '🟢'} Prioridad ${r.urgency}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="rec-section">
+      <div class="rec-title">Resumen de tus respuestas</div>
+      <div class="answers-summary">
+        ${currentArea.questions.map(q => {
+          let ans = answers[q.id];
+          if(Array.isArray(ans)) ans = ans.join(', ');
+          if(!ans || ans === '') ans = '—';
+          if(typeof ans === 'number') ans = `${ans} / ${q.max}`;
+          return `<div class="answer-row">
+            <span class="answer-q">${q.text.substring(0,60)}${q.text.length>60?'...':''}</span>
+            <span class="answer-a">${ans}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="btn-primary" style="background:${currentArea.color};box-shadow:0 0 20px rgba(${currentArea.rgb},0.3)"
+        onclick="sendToScaleIA()">
+        Solicitar propuesta personalizada →
+      </button>
+      <button class="btn-secondary" onclick="goHome()">
+        Evaluar otra área
+      </button>
+    </div>
+  `;
+}
+
+function calcScore(){
+  const a = answers;
+  let points = 0;
+  let maxPoints = 0;
+
+  // Generic scoring: more complete answers = higher score, weight by question type
+  currentArea.questions.forEach(q => {
+    maxPoints += 10;
+    const ans = a[q.id];
+    if(!ans) return;
+    if(q.type === 'radio' && ans) points += 8;
+    if(q.type === 'checkbox' && Array.isArray(ans)){
+      points += Math.min(10, ans.length * 2.5);
+    }
+    if(q.type === 'scale') points += Math.round((ans / q.max) * 8) + 2;
+    if(q.type === 'textarea' && ans && ans.length > 20) points += 10;
+    else if(q.type === 'textarea' && ans) points += 5;
+  });
+
+  const pct = Math.round((points / maxPoints) * 100);
+
+  // Area-specific scoring boost based on key answers
+  let urgencyBoost = getUrgencyBoost();
+  const total = Math.min(100, pct + urgencyBoost);
+
+  let label, description;
+  if(total >= 80){
+    label = 'ALTO POTENCIAL DE IMPACTO';
+    description = 'Tu empresa tiene las condiciones ideales para implementar esta solución con resultados rápidos y medibles. Recomendamos iniciar en las próximas 2 semanas.';
+  } else if(total >= 55){
+    label = 'POTENCIAL SÓLIDO';
+    description = 'Hay una oportunidad clara y bien definida. Con algunos ajustes previos en datos o procesos, la implementación puede generar ROI positivo en 60-90 días.';
+  } else {
+    label = 'OPORTUNIDAD EN DESARROLLO';
+    description = 'Identificamos áreas de mejora previas antes de implementar IA. Con la preparación correcta, el potencial es alto. Te recomendamos comenzar con consultoría estratégica.';
+  }
+
+  return { total, label, description };
+}
+
+function getUrgencyBoost(){
+  const a = answers;
+  const id = currentArea.id;
+  if(id === 'automatizacion'){
+    if(a.a1 === 'Más de 30 horas') return 15;
+    if(a.a1 === 'Entre 15 y 30 horas') return 8;
+  }
+  if(id === 'agentes'){
+    if(a.ag4 === 'Más de 500 interacciones/día') return 15;
+    if(a.ag9 === 'Más de $20,000 USD/mes') return 12;
+  }
+  if(id === 'predictivo'){
+    if(a.p6 >= 8) return 12;
+  }
+  if(id === 'chatbots'){
+    if(a.ch2 === 'Más de 10,000') return 15;
+    if(a.ch8 === 'Más de 24 horas') return 10;
+  }
+  if(id === 'llms'){
+    if(a.l4 === 'Más de 10,000 documentos') return 12;
+  }
+  if(id === 'estrategia'){
+    if(a.e1 === 'No hemos hecho nada con IA todavía') return 5;
+    if(a.e7 === 'Presupuesto significativo ($30K+)') return 12;
+  }
+  return 0;
+}
+
+function getRecommendations(score){
+  const a = answers;
+  const id = currentArea.id;
+  const recs = [];
+
+  if(id === 'automatizacion'){
+    if(a.a1 === 'Más de 30 horas' || a.a1 === 'Entre 15 y 30 horas'){
+      recs.push({icon:'⚡',title:'Automatización urgente de alto impacto',body:`Con ${a.a1} semanales en tareas repetitivas, el ROI de automatización es inmediato. Recomendamos comenzar con un flujo piloto que libere al menos el 60% de ese tiempo en la primera implementación.`,urgency:'Alta'});
+    }
+    if(a.a3 === 'Mezcla de herramientas desconectadas' || a.a3 === 'No tenemos herramientas formales'){
+      recs.push({icon:'🔗',title:'Integración de sistemas como primer paso',body:'Antes de automatizar procesos, necesitas conectar tus herramientas actuales. Una capa de integración (Make, n8n o Zapier) es la base de toda automatización efectiva.',urgency:'Alta'});
+    }
+    if(a.a4 >= 5){
+      recs.push({icon:'🛡️',title:'Reducción de errores humanos con validación automática',body:`${a.a4} errores semanales tienen un costo oculto significativo. Implementar validaciones automáticas y flujos con verificación puede eliminar el 90% de estos errores.`,urgency:'Media'});
+    }
+    recs.push({icon:'📊',title:'Medición de ROI desde el día 1',body:'Para cada proceso que automaticemos, definiremos métricas base (tiempo actual, costo actual, errores). Esto permite demostrar el valor en las primeras 2 semanas.',urgency:'Media'});
+    if(a.a10 && a.a10.length > 20){
+      recs.push({icon:'🎯',title:'Plan de acción para tu caso específico',body:`Basado en tu descripción: "${a.a10.substring(0,80)}..." — identificamos que este proceso es candidato ideal para una automatización en Make/n8n con integración a tus sistemas actuales.`,urgency:'Alta'});
+    }
+  }
+
+  else if(id === 'agentes'){
+    if(a.ag3 === 'No tenemos nada documentado' || a.ag3 === 'Algo informal en emails y chats'){
+      recs.push({icon:'📋',title:'Crear base de conocimiento antes del agente',body:'Un agente IA necesita documentación como fuente de verdad. El primer paso es estructurar el conocimiento clave de tu empresa en un formato que el agente pueda consumir.',urgency:'Alta'});
+    }
+    if(a.ag6 === 'Alta autonomía con supervisión mínima'){
+      recs.push({icon:'🔒',title:'Implementar sistema de supervisión y límites',body:'Alta autonomía requiere guardarraíles claros. Recomendamos una arquitectura con human-in-the-loop para decisiones de riesgo medio/alto antes de dar autonomía completa.',urgency:'Alta'});
+    }
+    if(a.ag4 === 'Más de 500 interacciones/día'){
+      recs.push({icon:'⚡',title:'Arquitectura de alto volumen con fallback humano',body:'Para 500+ interacciones diarias necesitas un agente con arquitectura robusta, cola de mensajes y sistema de escalamiento. El ROI es enorme: un agente puede reemplazar 3-5 personas.',urgency:'Alta'});
+    }
+    recs.push({icon:'🧪',title:'Piloto de 30 días con un caso de uso acotado',body:'Recomendamos comenzar con un caso de uso específico y bien definido — por ejemplo, solo la calificación de leads o solo preguntas frecuentes — antes de escalar a más funciones.',urgency:'Media'});
+    if(a.ag10 && a.ag10.length > 20){
+      recs.push({icon:'🎯',title:'Diseño del agente para tu objetivo específico',body:`Tu objetivo: "${a.ag10.substring(0,80)}..." — diseñaremos el agente con la arquitectura correcta (RAG, function calling, memory) para este caso exacto.`,urgency:'Alta'});
+    }
+  }
+
+  else if(id === 'predictivo'){
+    if(a.p2 === 'Menos de 6 meses de datos'){
+      recs.push({icon:'📦',title:'Estrategia de datos antes del modelo predictivo',body:'Con menos de 6 meses de datos, los modelos tendrán precisión limitada. Recomendamos implementar primero la recolección correcta de datos y usar modelos estadísticos simples mientras acumulamos historia.',urgency:'Alta'});
+    }
+    if(a.p3 && a.p3.includes('Excel / CSV')){
+      recs.push({icon:'🏗️',title:'Modernizar la infraestructura de datos',body:'Excel como fuente de datos limita severamente el análisis predictivo. Necesitas migrar a una base de datos o data warehouse para habilitar modelos en tiempo real.',urgency:'Alta'});
+    }
+    if(a.p5 === 'No, nadie dedicado a datos'){
+      recs.push({icon:'👥',title:'Definir responsable de datos en el equipo',body:'El análisis predictivo requiere alguien que entienda los resultados y los traduzca en decisiones. Podemos capacitar a alguien de tu equipo actual o complementar con un analista externo.',urgency:'Media'});
+    }
+    if(a.p6 >= 7){
+      recs.push({icon:'🚨',title:'Alta criticidad — modelo de alerta temprana urgente',body:`Con impacto ${a.p6}/10 en malas decisiones, el ROI de un modelo predictivo se paga rápidamente. Recomendamos desarrollar un modelo de alerta temprana como primera prioridad.`,urgency:'Alta'});
+    }
+    if(a.p10 && a.p10.length > 20){
+      recs.push({icon:'🎯',title:'Modelo específico para tu decisión clave',body:`Basado en tu respuesta: "${a.p10.substring(0,80)}..." — diseñaremos el modelo predictivo más simple posible que responda exactamente esta pregunta con los datos que ya tienes.`,urgency:'Alta'});
+    }
+  }
+
+  else if(id === 'chatbots'){
+    if(a.ch2 === 'Más de 10,000' || a.ch2 === '2,000 - 10,000'){
+      recs.push({icon:'🚀',title:'Chatbot de alto volumen — ROI inmediato',body:`Con ${a.ch2} consultas/mes, un chatbot que resuelva el ${a.ch3 || 50}% automáticamente puede ahorrar decenas de miles de dólares en costos de atención mensualmente.`,urgency:'Alta'});
+    }
+    if(a.ch8 === 'Más de 24 horas' || a.ch8 === '4 a 24 horas'){
+      recs.push({icon:'⏱️',title:'Reducción crítica del tiempo de primera respuesta',body:'Tiempo de respuesta de 4-24 horas es un problema de experiencia de cliente grave. Un chatbot puede dar primera respuesta en segundos, mejorando CSAT significativamente.',urgency:'Alta'});
+    }
+    if(a.ch6 === 'Muy complejo — accede a sistemas y ejecuta acciones'){
+      recs.push({icon:'🔗',title:'Arquitectura de chatbot con integración de sistemas',body:'Para un chatbot que ejecute acciones necesitas una arquitectura de agente (function calling) más compleja que un simple chatbot de FAQ. El tiempo de implementación es mayor pero el impacto es exponencial.',urgency:'Media'});
+    }
+    recs.push({icon:'📈',title:'Sistema de medición de resolución autónoma',body:'Define desde el día 1 la métrica de "containment rate" (% resuelto sin humano). Comenzar con 40-50% y mejorar iterativamente hacia 70-80% es un objetivo realista en 90 días.',urgency:'Media'});
+    if(a.ch10 && a.ch10.length > 20){
+      recs.push({icon:'🛡️',title:'Guardarraíles para consultas sensibles',body:`Implementaremos clasificadores para detectar "${a.ch10.substring(0,60)}..." y escalar automáticamente a un humano con todo el contexto de la conversación.`,urgency:'Media'});
+    }
+  }
+
+  else if(id === 'llms'){
+    if(a.l5 === 'Datos altamente confidenciales (financieros, médicos, legales)'){
+      recs.push({icon:'🔒',title:'Arquitectura de privacidad — LLM on-premise u ofuscación',body:'Con datos altamente sensibles, recomendamos evaluar modelos locales (Ollama + Mistral/Llama) o técnicas de anonimización antes de enviar datos a APIs externas.',urgency:'Alta'});
+    }
+    if(a.l3 === 'No tenemos equipo técnico' || a.l3 === 'Podemos con ayuda externa'){
+      recs.push({icon:'🤝',title:'Implementación llave en mano sin equipo técnico',body:'ScaleIA puede implementar la integración completa del LLM en tu flujo de trabajo sin requerir nada de tu equipo técnico. Entregamos la solución lista para usar.',urgency:'Media'});
+    }
+    if(a.l4 === 'Más de 10,000 documentos' || a.l4 === '1,000 - 10,000 documentos'){
+      recs.push({icon:'⚡',title:'Pipeline de procesamiento masivo de documentos',body:`Para ${a.l4} mensuales necesitas un pipeline asíncrono con batch processing. Esto reduce costos de API en 60-80% comparado con procesamiento documento por documento.`,urgency:'Alta'});
+    }
+    recs.push({icon:'🧪',title:'Prueba de concepto en 48 horas',body:'Antes de la implementación completa, construiremos un PoC con tus datos reales para validar la calidad del output y ajustar el prompt engineering a tu caso específico.',urgency:'Media'});
+    if(a.l10 && a.l10.length > 20){
+      recs.push({icon:'🎯',title:'Solución técnica para tu caso de uso específico',body:`Para tu caso: "${a.l10.substring(0,80)}..." — recomendamos una arquitectura de extracción estructurada con validación de esquema JSON para garantizar consistencia del output.`,urgency:'Alta'});
+    }
+  }
+
+  else if(id === 'estrategia'){
+    if(a.e1 === 'No hemos hecho nada con IA todavía'){
+      recs.push({icon:'🗺️',title:'Roadmap de IA desde cero — enfoque en quick wins',body:'Comenzar desde cero tiene ventajas: no hay deuda técnica. Recomendamos un sprint de diagnóstico de 2 semanas para identificar los 3 procesos con mayor ROI potencial y comenzar por ahí.',urgency:'Media'});
+    }
+    if(a.e6 >= 7){
+      recs.push({icon:'👥',title:'Programa de change management antes de implementar',body:`Con resistencia ${a.e6}/10, la implementación técnica perfecta puede fracasar si el equipo no adopta las herramientas. Incluimos sesiones de change management en nuestro proceso.`,urgency:'Alta'});
+    }
+    if(a.e7 === 'No hay presupuesto definido todavía' || a.e7 === 'Depende del plan de negocio que presentemos'){
+      recs.push({icon:'💰',title:'Business case con ROI proyectado para aprobación',body:'Te prepararemos un business case detallado con ROI proyectado, benchmarks de la industria y análisis de riesgo para que puedas conseguir la aprobación del presupuesto necesario.',urgency:'Alta'});
+    }
+    const fears = a.e9 || [];
+    if(fears.includes('Que sea muy caro sin ROI claro')){
+      recs.push({icon:'📊',title:'Modelo de ROI garantizado — pago por resultado',body:'Entendemos la preocupación. Por eso estructuramos proyectos con KPIs medibles desde el día 1 y fases de implementación que demuestran valor antes de comprometer la inversión total.',urgency:'Media'});
+    }
+    recs.push({icon:'🎯',title:'Taller de priorización estratégica IA',body:'Una sesión de 3 horas con tu equipo directivo para mapear oportunidades de IA, priorizar por impacto y factibilidad, y definir el roadmap de los próximos 6 meses.',urgency:'Media'});
+    if(a.e10 && a.e10.length > 20){
+      recs.push({icon:'✅',title:'Plan para alcanzar tu objetivo en 90 días',body:`Tu objetivo: "${a.e10.substring(0,80)}..." — es alcanzable en 90 días con el roadmap correcto. En la sesión de diagnóstico gratuita definimos exactamente cómo llegar ahí.`,urgency:'Alta'});
+    }
+  }
+
+  return recs.slice(0, 5);
+}
+
+// ── MAKE WEBHOOK URL ──────────────────────────────
+const MAKE_WEBHOOK = 'https://hook.us2.make.com/i41iopw71vocwsh8e3c3othlphlz43ai';
+
+// ── ABRIR MODAL ───────────────────────────────────
+function sendToScaleIA(){
+  const score = calcScore();
+  const badge = document.getElementById('modalScoreBadge');
+  badge.textContent = currentArea.icon + '  ' + currentArea.short + '  ·  Score: ' + score.total + '%  ·  ' + score.label;
+  badge.style.color = currentArea.color;
+  badge.style.borderColor = currentArea.color;
+
+  // Reset form
+  document.getElementById('modalForm').style.display = 'block';
+  document.getElementById('modalSuccess').style.display = 'none';
+  document.getElementById('btnModalSend').disabled = false;
+  document.getElementById('btnModalSend').textContent = 'Enviar diagnóstico y solicitar propuesta →';
+  ['mNombre','mEmpresa','mEmail','mTelefono'].forEach(id => document.getElementById(id).value = '');
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeModalOutside(e){
+  if(e.target.id === 'modalOverlay') closeModal();
+}
+
+// ── ENVIAR A MAKE ──────────────────────────────────
+function enviarDiagnostico(){
+  const nombre   = document.getElementById('mNombre').value.trim();
+  const email    = document.getElementById('mEmail').value.trim();
+  const telefono = document.getElementById('mTelefono').value.trim();
+  const empresa  = document.getElementById('mEmpresa').value.trim();
+  const horario  = document.getElementById('mHorario').value;
+
+  if(!nombre || !email || !telefono){
+    alert('Por favor completa Nombre, Email y Teléfono.');
+    return;
+  }
+
+  const btn = document.getElementById('btnModalSend');
+  btn.textContent = '⚡ Enviando...';
+  btn.disabled = true;
+
+  const score = calcScore();
+  const recs  = getRecommendations(score);
+
+  const payload = {
+    // Datos de contacto
+    nombre,
+    email,
+    telefono,
+    empresa,
+    horario_contacto: horario || 'Cualquier momento',
+
+    // Diagnóstico
+    area:         currentArea.title,
+    area_id:      currentArea.id,
+    score:        score.total,
+    nivel:        score.label,
+    descripcion:  score.description,
+
+    // Recomendaciones top 3
+    recomendacion_1: recs[0] ? recs[0].title + ' — ' + recs[0].body : '',
+    recomendacion_2: recs[1] ? recs[1].title + ' — ' + recs[1].body : '',
+    recomendacion_3: recs[2] ? recs[2].title + ' — ' + recs[2].body : '',
+
+    // Todas las respuestas como texto plano
+    respuestas_json: JSON.stringify(answers),
+
+    // Respuestas clave legibles
+    respuestas_legibles: currentArea.questions.map(q => {
+      let a = answers[q.id];
+      if(Array.isArray(a)) a = a.join(', ');
+      if(!a || a === '') a = '—';
+      return q.text.substring(0, 80) + ': ' + a;
+    }).join(' | '),
+
+    timestamp: new Date().toISOString(),
+    source:    'cuestionario_scaleia'
+  };
+
+  fetch(MAKE_WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(res => {
+    if(res.ok){
+      document.getElementById('modalForm').style.display = 'none';
+      document.getElementById('modalSuccess').style.display = 'block';
+    } else {
+      throw new Error('HTTP ' + res.status);
+    }
+  })
+  .catch(err => {
+    console.error('Error webhook:', err);
+    btn.textContent = 'Enviar diagnóstico y solicitar propuesta →';
+    btn.disabled = false;
+    alert('Hubo un problema al enviar. Por favor escríbenos directamente a hola@scaleia.com');
+  });
+}
+
+// ─── INIT ─────────────────────────────────────
+initHome();
+</script>
+
+<!-- ── MODAL CAPTURA DE DATOS ──────────────────── -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-box" id="modalBox">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <div id="modalForm">
+      <div class="modal-title">Un paso más</div>
+      <p class="modal-sub">Para enviarte la propuesta personalizada basada en tu diagnóstico, necesitamos tus datos de contacto.</p>
+      <div class="modal-score-badge" id="modalScoreBadge">⚡ Cargando diagnóstico...</div>
+
+      <div class="mfrow">
+        <div class="mfg">
+          <label>Nombre *</label>
+          <input type="text" id="mNombre" placeholder="Tu nombre">
+        </div>
+        <div class="mfg">
+          <label>Empresa</label>
+          <input type="text" id="mEmpresa" placeholder="Tu empresa">
+        </div>
+      </div>
+      <div class="mfg">
+        <label>Correo electrónico *</label>
+        <input type="email" id="mEmail" placeholder="tu@empresa.com">
+      </div>
+      <div class="mfg">
+        <label>WhatsApp / Teléfono *</label>
+        <input type="tel" id="mTelefono" placeholder="+52 722 000 0000">
+      </div>
+      <div class="mfg">
+        <label>¿Cuándo podemos llamarte?</label>
+        <select id="mHorario">
+          <option value="">Selecciona horario...</option>
+          <option>Mañana (9am - 12pm)</option>
+          <option>Tarde (12pm - 3pm)</option>
+          <option>Tarde-noche (3pm - 6pm)</option>
+          <option>Cualquier momento</option>
+        </select>
+      </div>
+      <button class="btn-modal-send" id="btnModalSend" onclick="enviarDiagnostico()">
+        Enviar diagnóstico y solicitar propuesta →
+      </button>
+      <p class="modal-privacy">🔒 Tus datos son confidenciales. Solo los usa ScaleIA para contactarte. Sin spam.</p>
+    </div>
+
+    <div class="modal-success" id="modalSuccess" style="display:none;">
+      <span class="ms-icon">✅</span>
+      <h3>¡Diagnóstico enviado!</h3>
+      <p>Un especialista de ScaleIA revisará tu diagnóstico completo y te contactará en menos de 2 horas con una propuesta personalizada para tu caso.<br><br>Revisa tu email — también te enviamos un resumen.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
